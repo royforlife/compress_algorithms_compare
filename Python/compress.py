@@ -6,68 +6,70 @@ from compress.algorithms.huffman import Huffman
 from compress.algorithms.lzw import LZW
 import os
 import time
+import pandas
 import matplotlib.pyplot as plt
 import numpy as np
+import energyusage
 
+def lzw():
+    lzw_df = pandas.DataFrame(columns=["compress_rate", "time", "energy"], index=["txt", "image", "video", "excel"])
+    for type in ["txt"]:
+        path = "./compress/dataset/" + type
+        input_path = path + "/input"
+        output_path = path + "/output" + "/lzw"
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        for filename in os.listdir(input_path):
+            input_file = input_path + "/" + filename
+            output_file = output_path + "/" + filename + ".tor"
+            print("input_file: ", input_file)
+            print("output_file: ", output_file)
+            begin = time.time()
+            lzw_compression_rate = LZW(verbose=False).compress_file(input_file, output_file)
+            lzw_time = time.time() - begin
+            lzw_energy = 0
+            lzw_df.loc[type] = [lzw_compression_rate, lzw_time, lzw_energy]
+    print("lzw_df: \n", lzw_df)
+    lzw_df.to_csv("./compress/result/benchmark/lzw.csv")
+    return True
+
+def huffman():
+    huffman_df = pandas.DataFrame(columns=["compress_rate", "time", "energy"], index=["txt", "image", "video", "excel"])
+    for type in ["txt"]:
+        path = "./compress/dataset/" + type
+        input_path = path + "/input"
+        output_path = path + "/output" + "/huffman"
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        for filename in os.listdir(input_path):
+            input_file = input_path + "/" + filename
+            output_file = output_path + "/" + filename + ".tor"
+            print("input_file: ", input_file)
+            print("output_file: ", output_file)
+            begin = time.time()
+            huffman_compression_rate = Huffman(verbose=False).compress_file(input_file, output_file)
+            huffman_time = time.time() - begin
+            huffman_energy = 0
+            huffman_df.loc[type] = [huffman_compression_rate, huffman_time, huffman_energy]
+    print("huffman_df: \n", huffman_df)
+    huffman_df.to_csv("./compress/result/benchmark/huffman.csv")
+    return True
 
 def benchmark():
     print("Benchmark starting...")
-
-    images_count = 14
+    lzw()
+    huffman()
+    # run_time_lzw, energy_lzw, _ = energyusage.evaluate(lzw)
+    # run_time_huffman, energy_lzw_huffman, _ = energyusage.evaluate(huffman)
+    # print("run_time_lzw: ", run_time_lzw, "energy_lzw: ", energy_lzw)
+    # print("run_time_huffman: ", run_time_huffman, "energy_lzw_huffman: ", energy_lzw_huffman)
+    images_count = 1
 
     huffman_times = []
     lzw_times = []
     huffman_compression_rates = []
     lzw_compression_rates = []
 
-    for i in range(1, images_count + 1):
-        input_filename = "dataset/image{}.ppm".format(i)
-        output_filename = "dataset/image{}.ppm.tor".format(i)
-
-        print("Benchmarking Huffman...")
-        begin = time.time()
-        compression_rate = Huffman(verbose=False).compress_file(input_filename, output_filename)
-        time_result = time.time() - begin
-        print("Done in {0:.2f}s\n".format(time_result))
-        huffman_times.append(time_result)
-        huffman_compression_rates.append(compression_rate)
-
-        print("Benchmarking LZW...")
-        begin = time.time()
-        compression_rate = LZW(verbose=False).compress_file(input_filename, output_filename)
-        time_result = time.time() - begin
-        print("Done in {0:.2f}s\n".format(time_result))
-        lzw_times.append(time_result)
-        lzw_compression_rates.append(compression_rate)
-
-        os.remove(output_filename)
-
-    bar_width = 0.35
-
-    fig, ax = plt.subplots()
-    index = np.arange(images_count)
-    ax.bar(index, huffman_times, bar_width, color='b', label='Huffman', alpha=0.4)
-    ax.bar(index + bar_width, lzw_times, bar_width, color='r', label='LZW', alpha=0.4)
-    ax.set_xlabel('Image Number')
-    ax.set_ylabel('Speed (s)')
-    ax.set_title('Algorithms speed')
-    ax.set_xticks(index + bar_width / 2)
-    ax.set_xticklabels([str(i) for i in range(1, images_count + 1)])
-    ax.legend()
-    fig.tight_layout()
-
-    fig, ax = plt.subplots()
-    ax.bar(index, huffman_compression_rates, bar_width, color='b', label='Huffman', alpha=0.4)
-    ax.bar(index + bar_width, lzw_compression_rates, bar_width, color='r', label='LZW', alpha=0.4)
-    ax.set_xlabel('Image Number')
-    ax.set_ylabel('Compression rate (%)')
-    ax.set_title('Algorithms compression')
-    ax.set_xticks(index + bar_width / 2)
-    ax.set_xticklabels([str(i) for i in range(1, images_count + 1)])
-    ax.legend()
-    fig.tight_layout()
-
-    plt.show()
 
 
 if __name__ == "__main__":
